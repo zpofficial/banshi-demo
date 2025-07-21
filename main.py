@@ -16,7 +16,7 @@ class MyPlugin(Star):
         self.scheduler = AsyncIOScheduler(timezone="Asia/Shanghai")
         self._schedule_task()
         self.scheduler.start()
-        logger.info("[xhs_auto] 每日推送任务已启动")
+        logger.warning("[xhs_auto] 每日推送任务已启动")
 
     # ---------- 定时任务 ----------
     def _schedule_task(self):
@@ -48,6 +48,33 @@ class MyPlugin(Star):
     async def initialize(self):
         """可选择实现异步的插件初始化方法，当实例化该插件类之后会自动调用该方法。"""
     
+    # ---------- 手动指令 ----------
+    @filter.command("xhs_add")
+    @filter.permission_type(filter.PermissionType.ADMIN)
+    async def cmd_add(self, event: AstrMessageEvent):
+        """把当前会话加入每日推送列表"""
+        umo = event.unified_msg_origin
+        if umo in self.config["targets"]:
+            yield event.plain_result("该会话已在推送列表中！")
+            return
+
+        self.config["targets"].append(umo)
+        self.config.save_config()
+        yield event.plain_result("✅已加入每日 10:00 推送列表！")
+
+    @filter.command("xhs_remove")
+    @filter.permission_type(filter.PermissionType.ADMIN)
+    async def cmd_remove(self, event: AstrMessageEvent):
+        """把当前会话从推送列表移除"""
+        umo = event.unified_msg_origin
+        if umo not in self.config["targets"]:
+            yield event.plain_result("该会话不在推送列表！")
+            return
+
+        self.config["targets"].remove(umo)
+        self.config.save_config()
+        yield event.plain_result("❌已移出推送列表！")
+        
     # 注册指令的装饰器。指令名为 helloworld。注册成功后，发送 `/helloworld` 就会触发这个指令，并回复 `你好, {user_name}!`
     @filter.command("helloworld")
     async def helloworld(self, event: AstrMessageEvent):
