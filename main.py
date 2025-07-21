@@ -1,6 +1,10 @@
-from astrbot.api.event import filter, AstrMessageEvent, MessageEventResult
-from astrbot.api.star import Context, Star, register
+import asyncio
+import datetime
+from apscheduler.schedulers.asyncio import AsyncIOScheduler   # pip install apscheduler
+from astrbot.api.star import Star, register, Context
+from astrbot.api.event import filter, AstrMessageEvent
 from astrbot.api import logger
+from astrbot.api.message_components import Plain, Image
 from astrbot.api.all import AstrBotConfig
 
 @register("helloworld", "YourName", "一个简单的 Hello World 插件", "1.0.0")
@@ -9,6 +13,37 @@ class MyPlugin(Star):
         super().__init__(context)
         self.context = context
         self.config = config
+        self.scheduler = AsyncIOScheduler(timezone="Asia/Shanghai")
+        self._schedule_task()
+        self.scheduler.start()
+        logger.info("[xhs_auto] 每日推送任务已启动")
+
+    # ---------- 定时任务 ----------
+    def _schedule_task(self):
+        hour, minute = map(int, self.config["push_time"].split(":"))
+        self.scheduler.add_job(
+            self._daily_push,
+            trigger="cron",
+            hour=hour,
+            minute=minute,
+            id="xhs_daily_push",
+            replace_existing=True,
+        )
+
+    async def _daily_push(self):
+        targets = self.config["targets"]
+        text = self.config["push_text"]
+        img  = self.config["push_image"]
+        chain = [Plain(text), Image.fromURL(img)]
+
+        logger.info(f"[xhs_auto] 开始推送，目标 {targets}")
+        for umo in targets:
+            try:
+                await self.context.send_message(umo, chain)
+                logger.info(f"[xhs_auto] 已推送至 {umo}")
+            except Exception as e:
+                logger.exception(f"[xhs_auto] 推送到 {umo} 失败: {e}")
+        
 
     async def initialize(self):
         """可选择实现异步的插件初始化方法，当实例化该插件类之后会自动调用该方法。"""
