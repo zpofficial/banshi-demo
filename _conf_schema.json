@@ -1,0 +1,26 @@
+{
+    "targets": {
+      "description": "需要每日推送的会话列表（unified_msg_origin）",
+      "type": "list",
+      "items": {
+        "type": "string"
+      },
+      "default": ["qq_group_123456789"]
+    },
+    "push_text": {
+      "description": "每日推送文案",
+      "type": "text",
+      "default": "🌞早上好！今日小红书精选已送达~\n别忘了点赞收藏哦！"
+    },
+    "push_image": {
+      "description": "图片 URL",
+      "type": "string",
+      "default": "https://picasso-static.xiaohongshu.com/fe-platform/2b145902e47cfe2c7843282b22bbe69e9541215c.png"
+    },
+    "push_time": {
+      "description": "每日推送时间（HH:MM，24h 制）",
+      "type": "string",
+      "default": "10:00"
+    }
+  }
+  
