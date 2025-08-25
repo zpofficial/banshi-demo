@@ -9,24 +9,23 @@ from astrbot.api.all import AstrBotConfig
 
 @register("helloworld", "YourName", "一个简单的 Hello World 插件", "1.0.0")
 class MyPlugin(Star):
-    def __init__(self, context: Context,config: AstrBotConfig):
+    def __init__(self, context: Context, config: AstrBotConfig):
         super().__init__(context)
         self.context = context
         self.config = config
         self.scheduler = AsyncIOScheduler(timezone="Asia/Shanghai")
         self._schedule_task()
         self.scheduler.start()
-        logger.warning("[xhs_auto] 每日推送任务已启动")
+        logger.warning("[xhs_auto] 每 10 分钟推送任务已启动")
 
     # ---------- 定时任务 ----------
     def _schedule_task(self):
-        hour, minute = map(int, self.config["push_time"].split(":"))
+        # 每 10 分钟推送一次
         self.scheduler.add_job(
             self._daily_push,
-            trigger="cron",
-            hour=hour,
-            minute=minute,
-            id="xhs_daily_push",
+            trigger="interval",
+            minutes=10,
+            id="xhs_auto_push_10min",
             replace_existing=True,
         )
 
